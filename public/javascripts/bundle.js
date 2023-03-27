@@ -16219,7 +16219,7 @@ const options = {
 };
 let model = "text-davinci-003";
 const url = "https://api.openai.com/v1/engines/" + model + "/completions";
-const imgUrl = "https://api.openai.com/v1"
+const imgUrl = "https://api.openai.com/v1/images/generations"
 
 async function longPoll() {
   try{
@@ -16246,6 +16246,7 @@ async function longPoll() {
   }
 }
 
+// 逐字打印效果以及最后的md效果渲染
 function printSlowly(text, board) {
   let textList = text.split('');
   let index = 0;
@@ -16264,6 +16265,7 @@ function printSlowly(text, board) {
   },80)
 }
 
+// 调用openAI接口，获取结果
 async function openAiApi(data) {
   await fetch(url, {
     method: 'post',
@@ -16289,7 +16291,8 @@ async function openAiApi(data) {
   });
 }
 
-$('#submitMsg').on('click', function() {
+// 获取输入参数并渲染开始回答的样式
+function startAnswer() {
   prompt = $('#textInput').val();
   $('#answer').append(`<div class="question">${prompt}</div>`)
   $('#answer').append(`<div class="answer wait"><div id="lightBlock" class="move">光标</div></div>`)
@@ -16300,23 +16303,53 @@ $('#submitMsg').on('click', function() {
   };
   openAiApi(params);
   $('#textInput').val('');
+}
+
+// 点击提交按钮
+$('#submitMsg').on('click', function() {
+  startAnswer();
 })
 
+
+// 输入框回车
 $('#textInput').on('keypress', function(even) {
-  console.log(even.keyCode);
   if (even.keyCode == 13) {
-    prompt = $('#textInput').val();
-    $('#answer').append(`<div class="question">${prompt}</div>`)
-    $('#answer').append(`<div class="answer wait"><div id="lightBlock" class="move">光标</div></div>`)
-    const params = {
-      "prompt": prompt,
-      "max_tokens": 200,
-      "n": 3,
-    };
-    openAiApi(params);
-    $('#textInput').val('');
+    startAnswer();
   }
 })
+// 调用openAI图片接口，获取结果
+async function openAiImgApi(data) {
+  await fetch(imgUrl, {
+    method: 'post',
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + apiKey,
+    },
+    body: JSON.stringify(data)
+  }).then(response => response.json()).then(data => {
+    console.log(data);
+    let imgUrl = data.data[0].url;
+    $('#answer').append(`<img src="${imgUrl}" alt="openai-image">`);
+  })
+  .catch(error => {
+    console.log(error);
+  });
+}
+
+// 获取输入参数并渲染开始回答的样式
+function startAnswer() {
+  prompt = $('#textInput').val();
+  $('#answer').append(`<div class="question">${prompt}</div>`)
+  $('#answer').append(`<div class="answer wait"><div id="lightBlock" class="move">光标</div></div>`)
+  const params = {
+    "prompt": prompt,
+    "max_tokens": 200,
+    "n": 3,
+  };
+  openAiApi(params);
+  openAiImgApi(params); // 调用openAI图片接口
+  $('#textInput').val('');
+}
 
 
 
